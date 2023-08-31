@@ -1,34 +1,40 @@
-import requests
-import csv
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+import csv
+import requests
 
-def scrapeWeb(url):
+# Enter url of the wesite to be scraped
+site = 'http://en.people.cn/'
+
+def scrapeSite(url):
     start = datetime(2022, 1, 1)
-    end = datetime(2022, 2, 1)
-    keyword = 'emissions'
+    end = datetime(2022, 1, 10)
+    keyword = 'the'
     
-    keyWordDict = {}
+    # list to store the results
+    keyWordList = []
     
     while start <= end:
-        response = requests.get(url)
+        response = requests.get(url)        
         if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            content = soup.get_text().lower()
-            wordCount = content.count(keyword)
-            keyWordDict[start.strftime('%Y-%m-%d')] = wordCount
+            # parse and extract the text content of the response.
+            # convert to lowercase and store the count of the keyword
+            # increment the start date using timedelta(days=1)
+            scrape = BeautifulSoup(response.text, 'html.parser')
+            wordCount = scrape.get_text().lower().count(keyword)
+            keyWordList.append({'Date': start.strftime('%Y-%m-%d'), 'Keyword': keyword, 'Count': wordCount})
         start += timedelta(days=1)
-    
-    csv_filename = 'carbon_word_count.csv'
-    with open(csv_filename, 'w', newline='') as csvfile:
-        csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(['Date', 'No. of occurences'])  # Write the header row
-        
-        for date, wordCount in keyWordDict.items():
-            csv_writer.writerow([date, wordCount])
 
-website = 'http://en.people.cn/'
-result = scrapeWeb(website)
-for date, wordCount in result.items():
-    print(f'Date: {date}, No. of times: {wordCount}')
-    
+    # use csv.DictWriter to write rows to the CSV file.
+    # use csvWriter.writeheader() to write the header row to the CSV file.
+    # iterate through the list and write the data as rows in the CSV file.
+    filename = 'keyword_count.csv'
+    with open(filename, 'w', newline='') as csvfile:
+        fieldnames = ['Date', 'Keyword', 'Count']
+        csvWriter = csv.DictWriter(csvfile, fieldnames = fieldnames)
+        
+        csvWriter.writeheader()
+        for x in keyWordList:
+            csvWriter.writerow(x)
+
+scrapeSite(site)
